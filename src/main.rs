@@ -34,12 +34,17 @@ fn main() -> Result<()> {
     device.grab()?;
 
     // Create a virtual keyboard to emit final events if we decide to not filter them.
-    let mut vd = VirtualDevice::builder()?
+    let vd = VirtualDevice::builder()?
         .name("double-tap virtual keyboard")
         .with_keys(device.supported_keys().context("keyboard without keys?")?)?
         .build()?;
 
     let threshold_ms = config.threshold as u128;
+
+    main_loop(device, vd, threshold_ms)
+}
+
+fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> Result<()> {
     let mut last_key_up: HashMap<u16, SystemTime> = HashMap::new();
     let mut key_pressed: HashMap<u16, bool> = HashMap::new();
 
