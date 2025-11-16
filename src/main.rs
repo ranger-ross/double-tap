@@ -1,17 +1,28 @@
 use std::{collections::HashMap, time::SystemTime};
 
 use anyhow::{Context, Result};
+use clap::Parser;
 use evdev::{Device, EventSummary, EventType, uinput::VirtualDevice};
 use input_event_codes::{EV_MSC, EV_SYN};
 
-use crate::discovery::{abs_keyboard_path, retrieve_keyboard_name};
+use crate::{
+    cli::Config,
+    discovery::{abs_keyboard_path, retrieve_keyboard_name},
+};
 
+mod cli;
 mod discovery;
 
 fn main() -> Result<()> {
     env_logger::init();
 
-    let keyboard = retrieve_keyboard_name()?;
+    let config = Config::parse();
+
+    let keyboard = match config.keyboard_name {
+        Some(k) => k,
+        None => retrieve_keyboard_name()?,
+    };
+
     log::info!("KEYBOARD: {keyboard}");
 
     let kb_path = abs_keyboard_path(&keyboard);
@@ -28,7 +39,7 @@ fn main() -> Result<()> {
         .with_keys(device.supported_keys().context("keyboard without keys?")?)?
         .build()?;
 
-    let threshold_ms: u128 = 30;
+    let threshold_ms = config.threshold as u128;
     let mut last_key_up: HashMap<u16, SystemTime> = HashMap::new();
     let mut key_pressed: HashMap<u16, bool> = HashMap::new();
 
