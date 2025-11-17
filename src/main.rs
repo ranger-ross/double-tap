@@ -29,6 +29,8 @@ fn main() -> Result<()> {
     let mut config = AppConfig::load()?.unwrap_or_else(AppConfig::default);
     config.merge_args(&args);
 
+    log::info!("Config loaded: {config:#?}");
+
     log::info!("KEYBOARD: {keyboard}");
 
     let kb_path = abs_keyboard_path(&keyboard);
@@ -43,6 +45,7 @@ fn main() -> Result<()> {
     let vd = VirtualDevice::builder()?
         .name("double-tap virtual keyboard")
         .with_keys(device.supported_keys().context("keyboard without keys?")?)?
+        .with_properties(device.properties())?
         .build()?;
 
     main_loop(device, vd, config)
@@ -75,7 +78,7 @@ fn main_loop(mut device: Device, mut vd: VirtualDevice, config: AppConfig) -> Re
                 continue;
             };
 
-            if code == EV_SYN!() || code == EV_MSC!() {
+            if code == EV_SYN!() {
                 // `.emit()` already emits these for us
                 continue;
             }
