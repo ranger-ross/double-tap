@@ -6,8 +6,8 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 clap = { version = "4.5.51", features = ["derive"] }
-env_logger = "0.11.8"
 evdev = "0.13.2"
+flexi_logger = "0.31.7"
 input-event-codes = "6.2.0"
 log = "0.4.28"
 serde = { version = "1.0.228", features = ["derive"] }

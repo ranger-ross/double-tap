@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::SystemTime};
 use anyhow::{Context, Result};
 use clap::Parser;
 use evdev::{Device, EventSummary, EventType, uinput::VirtualDevice};
-use input_event_codes::{EV_MSC, EV_SYN};
+use input_event_codes::EV_SYN;
 use log::Level;
 
 use crate::{
@@ -15,9 +15,10 @@ use crate::{
 mod cli;
 mod config;
 mod discovery;
+mod logging;
 
 fn main() -> Result<()> {
-    env_logger::init();
+    logging::configure_logging()?;
 
     let args = Args::parse();
 
