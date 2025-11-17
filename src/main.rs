@@ -4,24 +4,30 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use evdev::{Device, EventSummary, EventType, uinput::VirtualDevice};
 use input_event_codes::{EV_MSC, EV_SYN};
+use log::Level;
 
 use crate::{
-    cli::Config,
+    cli::Args,
+    config::AppConfig,
     discovery::{abs_keyboard_path, retrieve_keyboard_name},
 };
 
 mod cli;
+mod config;
 mod discovery;
 
 fn main() -> Result<()> {
     env_logger::init();
 
-    let config = Config::parse();
+    let args = Args::parse();
 
-    let keyboard = match config.keyboard_name {
-        Some(k) => k,
+    let keyboard = match &args.keyboard_name {
+        Some(k) => k.to_string(),
         None => retrieve_keyboard_name()?,
     };
+
+    let mut config = AppConfig::load()?.unwrap_or_else(AppConfig::default);
+    config.merge_args(&args);
 
     log::info!("KEYBOARD: {keyboard}");
 
@@ -39,12 +45,10 @@ fn main() -> Result<()> {
         .with_keys(device.supported_keys().context("keyboard without keys?")?)?
         .build()?;
 
-    let threshold_ms = config.threshold as u128;
-
-    main_loop(device, vd, threshold_ms)
+    main_loop(device, vd, config)
 }
 
-fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> Result<()> {
+fn main_loop(mut device: Device, mut vd: VirtualDevice, config: AppConfig) -> Result<()> {
     let mut last_key_up: HashMap<u16, SystemTime> = HashMap::new();
     let mut key_pressed: HashMap<u16, bool> = HashMap::new();
 
@@ -53,14 +57,21 @@ fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> R
             let code = event.code();
             let value = event.value();
 
-            let mut forward = |reason: &str| -> Result<()> {
-                log::debug!("Forwarding {code} ({reason})");
+            let threshold_ms = config
+                .key_overrides
+                .iter()
+                .find(|k| k.code == code)
+                .map(|k| k.threshold_ms)
+                .unwrap_or(config.threshold_ms) as u128;
+
+            let mut forward = |level: Level, reason: &str| -> Result<()> {
+                log::log!(level, "Forwarding {code} ({reason})");
                 vd.emit(&[event])?;
                 Ok(())
             };
 
             if !matches!(event.destructure(), EventSummary::Key(..)) {
-                forward("non-key event")?;
+                forward(Level::Trace, "non-key event")?;
                 continue;
             };
 
@@ -70,12 +81,12 @@ fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> R
             }
 
             if event.event_type() != EventType::KEY {
-                forward("non-key event")?;
+                forward(Level::Trace, "non-key event")?;
                 continue;
             }
 
             if value > 1 {
-                forward("hold")?;
+                forward(Level::Debug, "hold")?;
                 continue;
             }
 
@@ -84,7 +95,7 @@ fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> R
                 if *key_pressed.get(&code).unwrap_or(&false) {
                     last_key_up.insert(code, event.timestamp());
                     key_pressed.insert(code, false);
-                    forward("key up")?;
+                    forward(Level::Debug, "key up")?;
                 } else {
                     log::info!("FILTERING {} up: key not pressed beforehand", code);
                 }
@@ -93,7 +104,7 @@ fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> R
 
             let Some(prev) = last_key_up.get(&code) else {
                 key_pressed.insert(code, true);
-                forward("first press")?;
+                forward(Level::Debug, "first press")?;
                 continue;
             };
 
@@ -102,7 +113,7 @@ fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> R
 
             if duration_between > threshold_ms {
                 key_pressed.insert(code, true);
-                forward("key down")?;
+                forward(Level::Debug, "key down")?;
                 continue;
             }
             log::info!(
