@@ -50,8 +50,11 @@ fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> R
 
     while let Ok(events) = device.fetch_events() {
         for event in events {
+            let code = event.code();
+            let value = event.value();
+
             let mut forward = |reason: &str| -> Result<()> {
-                log::debug!("Forwarding {} ({reason})", event.code());
+                log::debug!("Forwarding {code} ({reason})");
                 vd.emit(&[event])?;
                 Ok(())
             };
@@ -61,7 +64,7 @@ fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> R
                 continue;
             };
 
-            if event.code() == EV_SYN!() || event.code() == EV_MSC!() {
+            if code == EV_SYN!() || code == EV_MSC!() {
                 // `.emit()` already emits these for us
                 continue;
             }
@@ -71,25 +74,25 @@ fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> R
                 continue;
             }
 
-            if event.value() > 1 {
+            if value > 1 {
                 forward("hold")?;
                 continue;
             }
 
             // key down
-            if event.value() == 0 {
-                if *key_pressed.get(&event.code()).unwrap_or(&false) {
-                    last_key_up.insert(event.code(), event.timestamp());
-                    key_pressed.insert(event.code(), false);
+            if value == 0 {
+                if *key_pressed.get(&code).unwrap_or(&false) {
+                    last_key_up.insert(code, event.timestamp());
+                    key_pressed.insert(code, false);
                     forward("key up")?;
                 } else {
-                    log::info!("FILTERING {} up: key not pressed beforehand", event.code());
+                    log::info!("FILTERING {} up: key not pressed beforehand", code);
                 }
                 continue;
             }
 
-            let Some(prev) = last_key_up.get(&event.code()) else {
-                key_pressed.insert(event.code(), true);
+            let Some(prev) = last_key_up.get(&code) else {
+                key_pressed.insert(code, true);
                 forward("first press")?;
                 continue;
             };
@@ -98,14 +101,12 @@ fn main_loop(mut device: Device, mut vd: VirtualDevice, threshold_ms: u128) -> R
             let duration_between = now.duration_since(*prev)?.as_millis();
 
             if duration_between > threshold_ms {
-                key_pressed.insert(event.code(), true);
+                key_pressed.insert(code, true);
                 forward("key down")?;
                 continue;
             }
             log::info!(
-                "FILTERED {} down: last key up event happened {} ms ago",
-                event.code(),
-                duration_between
+                "FILTERED {code} down: last key up event happened {duration_between} ms ago"
             );
         }
     }
