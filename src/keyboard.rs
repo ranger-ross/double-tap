@@ -51,6 +51,12 @@ pub fn select_keyboard(keyboard_arg: Option<String>) -> Result<String> {
                 }
             }
 
+            println!("Available keyboards:");
+            for (i, kb) in keyboards.iter().enumerate() {
+                println!("  {}: {}", i + 1, kb);
+            }
+            println!("Please specify one with -k <name>");
+
             Err(Error::MultipleKeyboards(keyboards))
                 .context("multiple keyboards found, please specify one with -k")
         }
