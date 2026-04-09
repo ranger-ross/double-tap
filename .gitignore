@@ -1,2 +1,9 @@
 /target
 .ignored
+/Cargo.lock
+*.pdb
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store

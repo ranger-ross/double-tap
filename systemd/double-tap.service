@@ -1,0 +1,12 @@
+[Unit]
+Description=Double Tap Keyboard Service
+After=local-fs.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/double-tap -k usb-SINO_WEALTH_USB_KEYBOARD-event-kbd -t 30
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+# Configuration for double-tap
+# Uncomment and modify the following lines as needed
+
+# Keyboard device name (auto-detected if omitted)
+#KEYBOARD="-k usb-SINO_WEALTH_USB_KEYBOARD-event-kbd"
+
+# Filter threshold in milliseconds (default: 30)
+#THRESHOLD="-t 30"
+
+# Verbosity level: 0=error, 1=info, 2=debug (default: 1)
+#VERBOSITY="-v 1"

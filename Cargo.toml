@@ -1,6 +1,25 @@
 [package]
 name = "double-tap"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+description = "Fix keyboard double-tappin (chattering) at the Linux input layer"
+license = "MIT"
+
+[[bin]]
+name = "double-tap"
+path = "src/main.rs"
 
 [dependencies]
+evdev = "0.13"
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+once_cell = "1.19"
+parking_lot = "0.12"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
