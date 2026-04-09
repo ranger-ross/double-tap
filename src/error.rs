@@ -1,6 +1,4 @@
-use thiserror::Error;
-
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("failed to open device: {0}")]
     DeviceOpen(#[from] std::io::Error),
