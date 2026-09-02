@@ -37,8 +37,9 @@ impl KeyboardDevice {
     pub fn create_uinput(&self) -> Result<VirtualDevice> {
         let supported = self.device.supported_events();
 
-        let builder =
-            VirtualDevice::builder().map_err(|e| Error::UinputCreate(format!("{:?}", e)))?;
+        let builder = VirtualDevice::builder()
+            .map_err(|e| Error::UinputCreate(format!("{:?}", e)))?
+            .name("double-tap");
 
         let builder = if supported.contains(EventType::KEY) {
             if let Some(keys) = self.device.supported_keys() {
