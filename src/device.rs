@@ -1,4 +1,3 @@
-use std::time::Instant;
 
 use anyhow::Result;
 use evdev::uinput::VirtualDevice;
@@ -87,7 +86,7 @@ pub fn run_event_loop(keyboard_name: &str, threshold_ms: u32) -> Result<()> {
 }
 
 fn process_event(event: &InputEvent, uinput: &mut VirtualDevice, filter: &ChatteringFilter) {
-    let timestamp = Instant::now();
+    let timestamp = event.timestamp();
 
     let event_type = event.event_type();
 

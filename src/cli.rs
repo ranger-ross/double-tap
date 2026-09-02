@@ -13,7 +13,7 @@ pub struct Args {
     #[arg(
         short,
         long,
-        default_value = "30",
+        default_value = "50",
         help = "Filter threshold in milliseconds"
     )]
     pub threshold: u32,
