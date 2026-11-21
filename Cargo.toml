@@ -7,7 +7,7 @@ edition = "2024"
 anyhow = "1.0.100"
 clap = { version = "4.5.51", features = ["derive"] }
 evdev = "0.13.2"
-flexi_logger = "0.31.7"
+flexi_logger = "0.32.0"
 input-event-codes = "6.2.0"
 log = "0.4.28"
 serde = { version = "1.0.228", features = ["derive"] }
